@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <audio id="bgMusic" src="back.mp3" loop></audio>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = 800;
+        canvas.height = 600;
+
+        const carImage = new Image();
+        carImage.src = "car.png"; // Replace with your car image file path
+
+        const obstacleImage = new Image();
+        obstacleImage.src = "uptr.png"; // Replace with your obstacle image file path
+
+        const bgMusic = document.getElementById("bgMusic");
+        bgMusic.play();
+
+        let carX = canvas.width / 2 - 25, carY = canvas.height - 120;
+        const carWidth = 50, carHeight = 100;
+        const obstacles = [];
+        const obstacleWidth = 50, obstacleHeight = 100;
+        let score = 0;
+        let gameOver = false;
+
+        // Key press events
+        const keys = { ArrowLeft: false, ArrowRight: false };
+        document.addEventListener("keydown", (e) => keys[e.key] = true);
+        document.addEventListener("keyup", (e) => keys[e.key] = false);
+
+        function spawnObstacle() {
+            const lane = Math.floor(Math.random() * 3);
+            obstacles.push({
+                x: lane * (canvas.width / 3) + canvas.width / 6 - obstacleWidth / 2,
+                y: -obstacleHeight,
+            });
+        }
+
+        function updateGame() {
+            if (gameOver) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw car
+            ctx.drawImage(carImage, carX, carY, carWidth, carHeight);
+
+            // Update car position
+            if (keys.ArrowLeft && carX > 0) carX -= 10;
+            if (keys.ArrowRight && carX < canvas.width - carWidth) carX += 10;
+
+            // Draw and update obstacles
+            for (let i = 0; i < obstacles.length; i++) {
+                const obstacle = obstacles[i];
+                obstacle.y += 5;
+                ctx.drawImage(obstacleImage, obstacle.x, obstacle.y, obstacleWidth, obstacleHeight);
+
+                // Check collision
+                if (
+                    obstacle.x < carX + carWidth &&
+                    obstacle.x + obstacleWidth > carX &&
+                    obstacle.y < carY + carHeight &&
+                    obstacle.y + obstacleHeight > carY
+                ) {
+                    gameOver = true;
+                }
+
+                // Remove off-screen obstacles
+                if (obstacle.y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    i--;
+                    score += 10;
+                }
+            }
+
+            // Display score
+            ctx.fillStyle = "black";
+            ctx.font = "20px Arial";
+            ctx.fillText(`Score: ${score}`, 10, 30);
+
+            if (gameOver) {
+                ctx.fillStyle = "black";
+                ctx.font = "40px Arial";
+                ctx.fillText("Game Over!", canvas.width / 2 - 100, canvas.height / 2);
+                ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - 100, canvas.height / 2 + 50);
+            } else {
+                requestAnimationFrame(updateGame);
+            }
+        }
+
+        setInterval(spawnObstacle, 1500);
+        updateGame();
+    </script>
+</body>
+</html>
